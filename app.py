@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-import tensorflow as tf
 from tensorflow.keras.models import load_model
+import json
 import numpy as np
 import os
 import cv2  # OpenCV for preprocessing
@@ -49,7 +49,13 @@ recommendations = {
     }
 }
 
-classes = list(recommendations.keys())
+# Class order must match training (see models/class_labels.json)
+_labels_path = os.path.join('models', 'class_labels.json')
+if os.path.isfile(_labels_path):
+    with open(_labels_path, encoding='utf-8') as f:
+        classes = json.load(f)
+else:
+    classes = list(recommendations.keys())
 
 # --- NEW: Delayed Delete Function ---
 def delayed_delete(file_path, delay):
@@ -96,7 +102,7 @@ def predict():
     try:
         # 3. Preprocessing and Prediction
         processed_img = process_image_opencv(img_path)
-        preds = model.predict(processed_img)
+        preds = model.predict(processed_img, verbose=0)
         pred_idx = np.argmax(preds)
         confidence = float(np.max(preds)) * 100
         
@@ -109,7 +115,8 @@ def predict():
             'remedy': info['remedy'],
             'doctor': info['doctor'],
             'image_url': img_path,
-            'chart_data': preds.tolist()[0]
+            'chart_data': preds.tolist()[0],
+            'chart_labels': ['AK', 'BCC', 'DF', 'BKL', 'MEL', 'NV', 'VASC'],
         }
 
         # --- Confidence Threshold Logic ---
@@ -134,4 +141,7 @@ def predict():
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use 5050 — port 5000 is often taken by other local dev servers on Windows
+    port = int(os.environ.get('PORT', 5050))
+    print(f'DermAI running at http://127.0.0.1:{port}')
+    app.run(debug=True, host='127.0.0.1', port=port, use_reloader=False)

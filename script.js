@@ -46,7 +46,7 @@ document.getElementById('uploadBtn').onclick = function() {
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['AK', 'BCC', 'BKL', 'DF', 'NV', 'MEL', 'VASC'],
+                labels: data.chart_labels || ['AK', 'BCC', 'DF', 'BKL', 'MEL', 'NV', 'VASC'],
                 datasets: [{
                     label: 'Probability %',
                     data: data.chart_data.map(val => (val * 100).toFixed(2)),

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DermAI - Advanced Classification</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">🩺 DermAI</div>
+      <div class="nav-links">
+        <a href="/">Classify</a>
+        <a href="/metrics">Model Metrics</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="badge">🧠 AI-Powered Dermatology</div>
+      <h1>Skin Disease <span class="highlight">Classification</span></h1>
+      <p>
+        Instant analysis with deep learning CNNs. Built on the HAM10000 dataset.
+      </p>
+
+      <div class="upload-box">
+        <input type="file" id="imageInput" accept="image/*" hidden />
+        <button
+          class="btn-secondary"
+          onclick="document.getElementById('imageInput').click()"
+        >
+          Choose Image
+        </button>
+        <button class="btn-primary" id="uploadBtn">Start Analysis</button>
+      </div>
+    </header>
+
+    <div
+      id="result-container"
+      class="container"
+      style="display: none; margin-top: 30px"
+    >
+      <div class="analysis-grid">
+        <div class="info-panel">
+          <img
+            id="previewImg"
+            src=""
+            style="
+              width: 100%;
+              border-radius: 10px;
+              margin-bottom: 15px;
+              border: 1px solid #ddd;
+            "
+          />
+          <h2 id="resClass" style="color: #2d9d8f">Diagnosis</h2>
+          <p><strong>Confidence:</strong> <span id="resConf"></span></p>
+          <hr />
+          <p><strong>💊 Remedy:</strong> <span id="resRemedy"></span></p>
+          <p>
+            <strong>🩺 Doctor's Recommendation:</strong>
+            <span id="resDoctor"></span>
+          </p>
+        </div>
+        <div class="chart-panel">
+          <h3 style="text-align: center; font-size: 0.9em; color: #666">
+            Probability Analysis
+          </h3>
+          <canvas id="predictionChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <footer class="disclaimer">
+      <p>
+        <strong>Disclaimer:</strong> This tool is for research purposes only.
+        Always consult a professional dermatologist for medical concerns.
+      </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>

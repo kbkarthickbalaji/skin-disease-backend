@@ -1,0 +1,17 @@
+# Ignore large model file (134MB - exceeds GitHub's 100MB direct push limit)
+models/skin_model.h5
+
+# Ignore temporary uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Ignore Python caches
+__pycache__/
+*.pyc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
