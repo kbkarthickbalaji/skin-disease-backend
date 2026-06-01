@@ -1,21 +1,30 @@
 from flask import Flask, render_template, request, jsonify
 from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.efficientnet import preprocess_input
 import json
 import numpy as np
 import os
-import cv2  # OpenCV for preprocessing
-import threading # For background deletion
+import cv2
+import threading
 import time
 
 app = Flask(__name__)
 
-# Ensure uploads folder exists
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# 1. Load your model
 model = load_model('models/skin_model.h5')
+
+_config_path = os.path.join('models', 'model_config.json')
+if os.path.isfile(_config_path):
+    with open(_config_path, encoding='utf-8') as f:
+        model_config = json.load(f)
+else:
+    model_config = {'preprocess': 'scale', 'chart_labels': ['AK', 'BCC', 'DF', 'BKL', 'MEL', 'NV', 'VASC']}
+
+INPUT_SIZE = model_config.get('input_size', 224)
+CHART_LABELS = model_config.get('chart_labels', ['AK', 'BCC', 'DF', 'BKL', 'MEL', 'NV', 'VASC'])
 
 # 2. Detailed Medical Data
 recommendations = {
@@ -68,13 +77,15 @@ def delayed_delete(file_path, delay):
     except Exception as e:
         print(f"Error in delayed delete: {e}")
 
-# --- OpenCV Preprocessing Function ---
+# Preprocessing must match training (EfficientNet preprocess_input, no blur)
 def process_image_opencv(img_path):
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.GaussianBlur(img, (5, 5), 0)
-    img = cv2.resize(img, (224, 224))
-    img_array = img / 255.0
+    img = cv2.resize(img, (INPUT_SIZE, INPUT_SIZE))
+    if model_config.get('preprocess') == 'efficientnet':
+        img_array = preprocess_input(img.astype(np.float32))
+    else:
+        img_array = img.astype(np.float32) / 255.0
     return np.expand_dims(img_array, axis=0)
 
 @app.route('/')
@@ -114,9 +125,9 @@ def predict():
             'confidence': f"{confidence:.2f}%",
             'remedy': info['remedy'],
             'doctor': info['doctor'],
-            'image_url': img_path,
+            'image_url': img_path.replace('\\', '/'),
             'chart_data': preds.tolist()[0],
-            'chart_labels': ['AK', 'BCC', 'DF', 'BKL', 'MEL', 'NV', 'VASC'],
+            'chart_labels': CHART_LABELS,
         }
 
         # --- Confidence Threshold Logic ---

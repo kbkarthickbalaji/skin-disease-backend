@@ -141,3 +141,10 @@ button {
     color: #999;
     border-top: 1px solid #eee;
 }
+
+/* Sample clinical images interactive styling */
+.sample-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary) !important;
+    box-shadow: 0 8px 16px rgba(45, 157, 143, 0.15) !important;
+}

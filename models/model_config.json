@@ -1,0 +1,14 @@
+{
+  "backbone": "efficientnetb0",
+  "input_size": 224,
+  "preprocess": "efficientnet",
+  "chart_labels": [
+    "AK",
+    "BCC",
+    "DF",
+    "BKL",
+    "MEL",
+    "NV",
+    "VASC"
+  ]
+}

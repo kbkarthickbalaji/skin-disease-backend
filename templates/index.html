@@ -35,6 +35,31 @@
           Choose Image
         </button>
         <button class="btn-primary" id="uploadBtn">Start Analysis</button>
+
+        <!-- Live Selected Image Preview -->
+        <div id="selectedPreviewContainer" style="display: none; margin-top: 25px;">
+          <p style="font-size: 0.9em; margin-bottom: 10px; color: var(--gray);">Selected Image Preview:</p>
+          <img id="selectedPreviewImg" style="max-width: 200px; max-height: 200px; border-radius: 10px; border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.12);" />
+        </div>
+      </div>
+
+      <!-- Try Sample Images Section -->
+      <div class="samples-section" style="margin-top: 40px;">
+        <h3 style="color: var(--secondary); font-size: 1.1em; margin-bottom: 15px;">Or try one of these clinical sample images:</h3>
+        <div class="samples-grid" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+          <div class="sample-card" onclick="loadSampleImage('/static/samples/sample_melanoma.png', 'sample_melanoma.png')" style="cursor: pointer; background: white; border-radius: 12px; padding: 10px; border: 1px solid #edf2f7; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; max-width: 130px; text-align: center;">
+            <img src="/static/samples/sample_melanoma.png" style="width: 110px; height: 110px; object-fit: cover; border-radius: 8px;" />
+            <p style="font-size: 0.85em; font-weight: bold; margin: 8px 0 0; color: #e63946;">Melanoma</p>
+          </div>
+          <div class="sample-card" onclick="loadSampleImage('/static/samples/sample_nevus.png', 'sample_nevus.png')" style="cursor: pointer; background: white; border-radius: 12px; padding: 10px; border: 1px solid #edf2f7; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; max-width: 130px; text-align: center;">
+            <img src="/static/samples/sample_nevus.png" style="width: 110px; height: 110px; object-fit: cover; border-radius: 8px;" />
+            <p style="font-size: 0.85em; font-weight: bold; margin: 8px 0 0; color: #2a9d8f;">Nevus Mole</p>
+          </div>
+          <div class="sample-card" onclick="loadSampleImage('/static/samples/sample_vascular.png', 'sample_vascular.png')" style="cursor: pointer; background: white; border-radius: 12px; padding: 10px; border: 1px solid #edf2f7; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.3s; max-width: 130px; text-align: center;">
+            <img src="/static/samples/sample_vascular.png" style="width: 110px; height: 110px; object-fit: cover; border-radius: 8px;" />
+            <p style="font-size: 0.85em; font-weight: bold; margin: 8px 0 0; color: #3a86ff;">Vascular Lesion</p>
+          </div>
+        </div>
       </div>
     </header>
 
