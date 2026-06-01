@@ -1,5 +1,5 @@
-# Ignore large model file (134MB - exceeds GitHub's 100MB direct push limit)
-models/skin_model.h5
+# Ignore large model file (only if it exceeds GitHub's 100MB limit, skin_model.h5 is ~20MB so we want to include it)
+# models/skin_model.h5
 
 # Ignore temporary uploads
 static/uploads/*
