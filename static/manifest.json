@@ -1,0 +1,17 @@
+{
+  "name": "DermAI Skin Disease Classifier",
+  "short_name": "DermAI",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4fbf9",
+  "theme_color": "#2d9d8f",
+  "icons": [
+    {
+      "src": "/static/samples/sample_nevus.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
