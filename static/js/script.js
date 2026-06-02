@@ -73,19 +73,90 @@ function resetButtonState() {
     document.getElementById('uploadBtn').disabled = false;
 }
 
+let localStream = null;
+let capturedBlob = null;
+
+// Camera trigger buttons
+const cameraBtn = document.getElementById('cameraBtn');
+const cameraContainer = document.getElementById('cameraContainer');
+const video = document.getElementById('video');
+const captureBtn = document.getElementById('captureBtn');
+const closeCameraBtn = document.getElementById('closeCameraBtn');
+
+cameraBtn.onclick = function() {
+    // Hide previous previews
+    document.getElementById('selectedPreviewContainer').style.display = 'none';
+    capturedBlob = null;
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+            localStream = stream;
+            video.srcObject = stream;
+            cameraContainer.style.display = 'flex';
+            cameraBtn.style.display = 'none';
+        })
+        .catch(err => {
+            console.error("Camera access failed:", err);
+            alert("Could not access camera. Please check permissions.");
+        });
+};
+
+closeCameraBtn.onclick = function() {
+    stopCamera();
+};
+
+function stopCamera() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    cameraContainer.style.display = 'none';
+    cameraBtn.style.display = 'inline-block';
+}
+
+captureBtn.onclick = function() {
+    if (!localStream) return;
+
+    // Create virtual canvas to capture the frame
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw the current video frame on canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to blob and show preview
+    canvas.toBlob(blob => {
+        capturedBlob = blob;
+        
+        // Show in preview container
+        const previewContainer = document.getElementById('selectedPreviewContainer');
+        const previewImg = document.getElementById('selectedPreviewImg');
+        previewImg.src = URL.createObjectURL(blob);
+        previewContainer.style.display = 'block';
+        
+        // Stop the camera stream now
+        stopCamera();
+    }, 'image/png');
+};
+
 // This listens for the 'Start Analysis' button click
 document.getElementById('uploadBtn').onclick = function() {
     let fileInput = document.getElementById('imageInput');
     
-    // Validation: Check if a file is selected
-    if (fileInput.files.length === 0) {
+    // Validation: Check if a file is selected OR if we have a captured camera image
+    if (fileInput.files.length === 0 && !capturedBlob) {
         alert("Please choose a skin lesion image first, or click a sample below!");
         return;
     }
 
     // Prepare the data to send to Flask
     let formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    if (capturedBlob) {
+        formData.append('file', capturedBlob, 'captured_lesion.png');
+    } else {
+        formData.append('file', fileInput.files[0]);
+    }
 
     // Show a "Processing" message
     document.getElementById('uploadBtn').innerText = "Analyzing...";
@@ -113,8 +184,9 @@ function loadSampleImage(url, filename) {
             let formData = new FormData();
             formData.append('file', file);
             
-            // Clear regular input
+            // Clear regular input & camera stream
             document.getElementById('imageInput').value = "";
+            capturedBlob = null;
             
             document.getElementById('uploadBtn').innerText = "Analyzing Sample...";
             runAnalysis(formData);
@@ -126,9 +198,10 @@ function loadSampleImage(url, filename) {
         });
 }
 
-// This part handles the immediate image preview when you "Choose File"
+// Handles immediate preview when you select a local file
 document.getElementById('imageInput').addEventListener('change', function(e) {
     if (e.target.files[0]) {
+        capturedBlob = null; // Clear camera capture if they choose a new file
         const reader = new FileReader();
         reader.onload = function() {
             const previewContainer = document.getElementById('selectedPreviewContainer');
@@ -139,3 +212,4 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
         reader.readAsDataURL(e.target.files[0]);
     }
 });
+
