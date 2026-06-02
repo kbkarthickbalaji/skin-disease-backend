@@ -83,98 +83,127 @@ const video = document.getElementById('video');
 const captureBtn = document.getElementById('captureBtn');
 const closeCameraBtn = document.getElementById('closeCameraBtn');
 
-cameraBtn.onclick = function() {
-    // Hide previous previews
-    document.getElementById('selectedPreviewContainer').style.display = 'none';
-    capturedBlob = null;
+if (cameraBtn) {
+    cameraBtn.onclick = function() {
+        // Hide previous previews
+        const previewContainer = document.getElementById('selectedPreviewContainer');
+        if (previewContainer) previewContainer.style.display = 'none';
+        capturedBlob = null;
+        
+        // Reset camera inputs
+        const cameraInput = document.getElementById('cameraInput');
+        if (cameraInput) cameraInput.value = "";
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => {
-            localStream = stream;
-            video.srcObject = stream;
-            cameraContainer.style.display = 'flex';
-            cameraBtn.style.display = 'none';
-        })
-        .catch(err => {
-            console.error("Camera access failed:", err);
-            alert("Could not access camera. Please check permissions.");
-        });
-};
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(stream => {
+                    localStream = stream;
+                    if (video) video.srcObject = stream;
+                    if (cameraContainer) cameraContainer.style.display = 'flex';
+                    cameraBtn.style.display = 'none';
+                })
+                .catch(err => {
+                    console.error("Camera access failed:", err);
+                    alert("Could not access camera. Please check permissions.");
+                });
+        } else {
+            alert("WebRTC Live camera is not supported in this browser/context. Please use the 'Take Photo' button instead.");
+        }
+    };
+}
 
-closeCameraBtn.onclick = function() {
-    stopCamera();
-};
+if (closeCameraBtn) {
+    closeCameraBtn.onclick = function() {
+        stopCamera();
+    };
+}
 
 function stopCamera() {
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
     }
-    cameraContainer.style.display = 'none';
-    cameraBtn.style.display = 'inline-block';
+    if (cameraContainer) cameraContainer.style.display = 'none';
+    if (cameraBtn) cameraBtn.style.display = 'inline-block';
 }
 
-captureBtn.onclick = function() {
-    if (!localStream) return;
+if (captureBtn) {
+    captureBtn.onclick = function() {
+        if (!localStream || !video) return;
 
-    // Create virtual canvas to capture the frame
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 320;
-    canvas.height = video.videoHeight || 240;
-    const ctx = canvas.getContext('2d');
-    
-    // Draw the current video frame on canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to blob and show preview
-    canvas.toBlob(blob => {
-        capturedBlob = blob;
+        // Create virtual canvas to capture the frame
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 240;
+        const ctx = canvas.getContext('2d');
         
-        // Show in preview container
-        const previewContainer = document.getElementById('selectedPreviewContainer');
-        const previewImg = document.getElementById('selectedPreviewImg');
-        previewImg.src = URL.createObjectURL(blob);
-        previewContainer.style.display = 'block';
+        // Draw the current video frame on canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Stop the camera stream now
-        stopCamera();
-    }, 'image/png');
-};
+        // Convert to blob and show preview
+        canvas.toBlob(blob => {
+            capturedBlob = blob;
+            
+            // Show in preview container
+            const previewContainer = document.getElementById('selectedPreviewContainer');
+            const previewImg = document.getElementById('selectedPreviewImg');
+            if (previewImg) previewImg.src = URL.createObjectURL(blob);
+            if (previewContainer) previewContainer.style.display = 'block';
+            
+            // Stop the camera stream now
+            stopCamera();
+        }, 'image/png');
+    };
+}
 
 // This listens for the 'Start Analysis' button click
-document.getElementById('uploadBtn').onclick = function() {
-    let fileInput = document.getElementById('imageInput');
-    
-    // Validation: Check if a file is selected OR if we have a captured camera image
-    if (fileInput.files.length === 0 && !capturedBlob) {
-        alert("Please choose a skin lesion image first, or click a sample below!");
-        return;
-    }
+const uploadBtn = document.getElementById('uploadBtn');
+if (uploadBtn) {
+    uploadBtn.onclick = function() {
+        let fileInput = document.getElementById('imageInput');
+        let cameraInput = document.getElementById('cameraInput');
+        
+        let hasFile = (fileInput && fileInput.files.length > 0) || 
+                      (cameraInput && cameraInput.files.length > 0) || 
+                      capturedBlob;
 
-    // Prepare the data to send to Flask
-    let formData = new FormData();
-    if (capturedBlob) {
-        formData.append('file', capturedBlob, 'captured_lesion.png');
-    } else {
-        formData.append('file', fileInput.files[0]);
-    }
+        // Validation: Check if a file is selected OR if we have a captured camera image
+        if (!hasFile) {
+            alert("Please choose a skin lesion image first, or click a sample below!");
+            return;
+        }
 
-    // Show a "Processing" message
-    document.getElementById('uploadBtn').innerText = "Analyzing...";
-    document.getElementById('uploadBtn').disabled = true;
+        // Prepare the data to send to Flask
+        let formData = new FormData();
+        if (capturedBlob) {
+            formData.append('file', capturedBlob, 'captured_lesion.png');
+        } else if (cameraInput && cameraInput.files.length > 0) {
+            formData.append('file', cameraInput.files[0]);
+        } else if (fileInput && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
 
-    runAnalysis(formData);
-};
+        // Show a "Processing" message
+        uploadBtn.innerText = "Analyzing...";
+        uploadBtn.disabled = true;
+
+        runAnalysis(formData);
+    };
+}
 
 // Handles loading one of the clinic sample images automatically
 function loadSampleImage(url, filename) {
-    document.getElementById('uploadBtn').innerText = "Loading Sample...";
-    document.getElementById('uploadBtn').disabled = true;
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (uploadBtn) {
+        uploadBtn.innerText = "Loading Sample...";
+        uploadBtn.disabled = true;
+    }
 
     // Show preview in upload section
     const previewContainer = document.getElementById('selectedPreviewContainer');
     const previewImg = document.getElementById('selectedPreviewImg');
-    previewImg.src = url;
-    previewContainer.style.display = 'block';
+    if (previewImg) previewImg.src = url;
+    if (previewContainer) previewContainer.style.display = 'block';
 
     // Fetch local sample file to send to API
     fetch(url)
@@ -184,11 +213,16 @@ function loadSampleImage(url, filename) {
             let formData = new FormData();
             formData.append('file', file);
             
-            // Clear regular input & camera stream
-            document.getElementById('imageInput').value = "";
+            // Clear regular inputs & camera stream
+            const fileInput = document.getElementById('imageInput');
+            if (fileInput) fileInput.value = "";
+            const cameraInput = document.getElementById('cameraInput');
+            if (cameraInput) cameraInput.value = "";
             capturedBlob = null;
             
-            document.getElementById('uploadBtn').innerText = "Analyzing Sample...";
+            if (uploadBtn) {
+                uploadBtn.innerText = "Analyzing Sample...";
+            }
             runAnalysis(formData);
         })
         .catch(err => {
@@ -199,17 +233,45 @@ function loadSampleImage(url, filename) {
 }
 
 // Handles immediate preview when you select a local file
-document.getElementById('imageInput').addEventListener('change', function(e) {
-    if (e.target.files[0]) {
-        capturedBlob = null; // Clear camera capture if they choose a new file
-        const reader = new FileReader();
-        reader.onload = function() {
-            const previewContainer = document.getElementById('selectedPreviewContainer');
-            const previewImg = document.getElementById('selectedPreviewImg');
-            previewImg.src = reader.result;
-            previewContainer.style.display = 'block';
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    }
-});
-
+const imageInput = document.getElementById('imageInput');
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            capturedBlob = null; // Clear camera capture if they choose a new file
+            // Clear camera input
+            const cameraInput = document.getElementById('cameraInput');
+            if (cameraInput) cameraInput.value = "";
+            
+            const reader = new FileReader();
+            reader.onload = function() {
+                const previewContainer = document.getElementById('selectedPreviewContainer');
+                const previewImg = document.getElementById('selectedPreviewImg');
+                if (previewImg) previewImg.src = reader.result;
+                if (previewContainer) previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+}
+
+// Handles immediate preview for native mobile camera input
+const cameraInput = document.getElementById('cameraInput');
+if (cameraInput) {
+    cameraInput.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            capturedBlob = null; // Clear WebRTC camera capture
+            // Clear regular file input
+            const fileInput = document.getElementById('imageInput');
+            if (fileInput) fileInput.value = "";
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const previewContainer = document.getElementById('selectedPreviewContainer');
+                const previewImg = document.getElementById('selectedPreviewImg');
+                if (previewImg) previewImg.src = reader.result;
+                if (previewContainer) previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+}

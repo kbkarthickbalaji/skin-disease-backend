@@ -29,14 +29,23 @@
 
       <div class="upload-box">
         <input type="file" id="imageInput" accept="image/*" hidden />
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
         <button
           class="btn-secondary"
           onclick="document.getElementById('imageInput').click()"
         >
           Choose Image
         </button>
+        <button
+          class="btn-secondary"
+          id="nativeCameraBtn"
+          onclick="document.getElementById('cameraInput').click()"
+          style="margin-left: 10px; background: #e0f2f1; color: var(--primary); border: 1px solid var(--primary) !important;"
+        >
+          📷 Take Photo
+        </button>
         <button class="btn-secondary" id="cameraBtn" style="margin-left: 10px; background: #e0f2f1; color: var(--primary); border: 1px solid var(--primary) !important;">
-          📷 Turn On Camera
+          💻 Live Webcam
         </button>
         <button class="btn-primary" id="uploadBtn">Start Analysis</button>
 

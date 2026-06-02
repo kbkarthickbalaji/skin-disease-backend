@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.efficientnet import preprocess_input
+import onnxruntime as ort
 import json
 import numpy as np
 import os
@@ -14,7 +13,8 @@ UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-model = load_model('models/skin_model.h5')
+# Load ONNX model instead of H5
+ort_session = ort.InferenceSession('models/skin_model.onnx')
 
 _config_path = os.path.join('models', 'model_config.json')
 if os.path.isfile(_config_path):
@@ -77,13 +77,13 @@ def delayed_delete(file_path, delay):
     except Exception as e:
         print(f"Error in delayed delete: {e}")
 
-# Preprocessing must match training (EfficientNet preprocess_input, no blur)
+# Preprocessing must match training (no tf dependencies)
 def process_image_opencv(img_path):
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (INPUT_SIZE, INPUT_SIZE))
     if model_config.get('preprocess') == 'efficientnet':
-        img_array = preprocess_input(img.astype(np.float32))
+        img_array = img.astype(np.float32)
     else:
         img_array = img.astype(np.float32) / 255.0
     return np.expand_dims(img_array, axis=0)
@@ -113,7 +113,19 @@ def predict():
     try:
         # 3. Preprocessing and Prediction
         processed_img = process_image_opencv(img_path)
-        preds = model.predict(processed_img, verbose=0)
+        
+        # Prepare normalization inputs for ONNX model
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1, 1, 1, 3)
+        variance = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1, 1, 1, 3)
+        sqrt_variance = np.sqrt(variance)
+        
+        inputs = {
+            'input_layer:0': processed_img.astype(np.float32),
+            'skin_classifier_1/normalization_1/Sub/y:0': mean,
+            'skin_classifier_1/normalization_1/Sqrt/x:0': sqrt_variance
+        }
+        
+        preds = ort_session.run(None, inputs)[0]
         pred_idx = np.argmax(preds)
         confidence = float(np.max(preds)) * 100
         
